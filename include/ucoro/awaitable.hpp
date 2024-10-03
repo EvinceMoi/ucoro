@@ -69,6 +69,25 @@ namespace ucoro
 	struct local_storage_t {};
 	inline constexpr local_storage_t<void> local_storage;
 
+	struct this_coro_handle_t{};
+	inline constexpr this_coro_handle_t this_coro_handle;
+
+	struct suspend_t
+	{
+		bool await_ready() const noexcept
+		{
+			return false;
+		}
+
+		void await_suspend(coroutine_handle<void>) noexcept
+		{
+		}
+
+		void await_resume() const noexcept
+		{
+		}
+	};
+	inline constexpr suspend_t suspend;
 
 	//////////////////////////////////////////////////////////////////////////
 	namespace detail
@@ -205,6 +224,30 @@ namespace ucoro
 			};
 
 			return result{ this };
+		}
+
+		auto await_transform(this_coro_handle_t)
+		{
+			struct result
+			{
+				awaitable_promise_base* this_;
+
+				bool await_ready() const noexcept
+				{
+					return true;
+				}
+
+				void await_suspend(coroutine_handle<void>) noexcept
+				{
+				}
+
+				coroutine_handle<> await_resume() const noexcept
+				{
+					return coroutine_handle<awaitable_promise_base>::from_promise(*this_);
+				}
+			};
+
+			return result{this};
 		}
 
 		template <typename T>

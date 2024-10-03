@@ -15,6 +15,21 @@ ucoro::awaitable<int> coro_compute_int(int value)
 		});
 	});
 
+
+	std::coroutine_handle<> this_coro_handle = co_await ucoro::this_coro_handle;
+
+	std::cout << this_coro_handle.address() << " this_coro_handle\n";
+
+	main_ioc.post([&ret, value, this_coro_handle]() mutable {
+		std::this_thread::sleep_for(std::chrono::seconds(0));
+		std::cout << value << " value\n";
+		//handle(value * 100);
+		ret = value * 100;
+		this_coro_handle.resume();
+	});
+
+	co_await ucoro::suspend;
+
 	co_return (value + ret);
 }
 
